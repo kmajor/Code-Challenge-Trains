@@ -1,9 +1,10 @@
 require "minitest/autorun"
+require "./parser"
 
-class LocoSearch < Minitest:Test
+class LocoSearch < MiniTest::Test
   def setup
     file = "search.xml"
-    @search = Search.new(file)
+    @search = Search.new({file: file})
   end
 
   def test_parser_creates_nokogiri_object
@@ -23,10 +24,10 @@ class LocoSearch < Minitest:Test
 
 end
 
-class LocoRoutes < Minitest:Test
+class LocoRoutes < MiniTest::Test
   def setup
     file = "search.xml"
-    @search = Search.new(file)
+    @search = Search.new({file: file})
     @route = @search.routes.first
   end
 
@@ -41,5 +42,6 @@ class LocoRoutes < Minitest:Test
   def test_total_travel_time
     assert_true @route.total_travel_time, 'Need to calculate'
   end
-
 end
+
+
