@@ -22,6 +22,14 @@ class LocoSearch < MiniTest::Test
     #add all relevant vars
   end
 
+  def test_quickest_route
+    assert_equal @search.quickest_route, @search.routes[1]
+  end
+
+  def test_cheapest_route
+    assert_equal @search.cheapest_route,  @search.routes[2]
+  end
+
 end
 
 class LocoRoutes < MiniTest::Test
@@ -40,8 +48,36 @@ class LocoRoutes < MiniTest::Test
   end
 
   def test_total_travel_time
-    assert_equal @route.total_travel_time, 'Need to calculate'
+    assert_equal @route.total_travel_time, 594
   end
+
+  def test_id_exists
+    assert_equal @route.id, 'F4S1DS'
+  end
+
 end
 
+class LocoConnections < MiniTest::Test
+  def setup
+    file = "search.xml"
+    @search = Search.new({file: file})
+    @route = @search.routes.first
+    @connection = @route.connections.first
+  end
 
+  def test_basic_variables_populate
+    assert_equal @connection.train_name, "Eurostar"
+    assert_equal @connection.start_station, "London St Pancras International"
+    #in real life add all vars
+  end
+
+  def test_duration
+    assert_equal @connection.duration, 138
+  end
+
+  def test_fares
+    assert_equal @connection.fares.class, Hash
+    assert_equal @connection.fares.count, 2
+    assert_equal @connection.fares['Standard Class'][:value], 79.0
+  end
+end

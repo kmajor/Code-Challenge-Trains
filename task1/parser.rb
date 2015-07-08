@@ -20,25 +20,50 @@ class Search
 
   def parse_file
     search_results = @doc.xpath('//searchresults//searchresult')
-    search_info = Array.new
     search_results.each do |result|
       connections = Array.new
-      result_id = result.id.text
+      route_id = result.id.text
       result.connections.connection.each do |xml_connection|
         connection = Connection.build_from_xml(xml_connection)
         connections << connection
       end
-    @routes << Route.new(connections: connections)
+    @routes << Route.new({id: route_id, connections: connections})
     end
   end
+
+  def cheapest_route
+    @routes.sort_by(&:cheapest_fare).first
+  end
+
+  def quickest_route
+    quickest = @routes.first
+    @routes.each do |route|
+      quickest = route if route.total_travel_time < quickest.total_travel_time
+    end
+    quickest
+  end
+
 
 end
 
 class Route
-  attr_accessor :connections
+  attr_accessor :connections, :id
   def initialize(args)
     @connections = args[:connections]
+    @id = args[:id]
     calculate_layovers unless @connections.count < 2
+  end
+
+  def cheapest_fare
+    lowest_fares = 0.00
+    @connections.each do |connection|
+      low_fare = nil
+      connection.fares.each do |fare|
+        low_fare = fare[1][:value] if low_fare.nil? || low_fare > fare[1][:value]
+      end
+      lowest_fares += low_fare
+    end
+    lowest_fares
   end
 
   def num_connections
@@ -62,7 +87,7 @@ end
 
 
 class Connection
-  attr_accessor :layover_wait, :arrival_time, :departure_time, :start_station, :train_name
+  attr_accessor :layover_wait, :arrival_time, :departure_time, :finish_station, :start_station, :train_name, :fares
   def initialize(args)
     @start_station = args[:start]
     @finish_station = args[:finish]
@@ -86,21 +111,47 @@ class Connection
 
   def self.connection_fares (fare_data)
     fares = {}
-    fare_data.each do |one_fare|
-      fare_class = one_fare.children[1].text
-      fares[fare_class][:currency] = one_fare.price.currency.text.to_f
-      fares[fare_class][:value] = one_fare.price.value.text.to_f
+    fare_data.fare.each do |fare|
+      klass = fare.children[1].text
+      fares[klass]= {}
+      fares[klass][:currency] = fare.price.currency.text
+      fares[klass][:value] = fare.price.value.text.to_f
     end
+    fares
   end
 
   def duration
-    @arrival_time - @departure_time
+    #subtracting timestamps returns diff in days, so multiple by 24 * 60
+    ((@arrival_time - @departure_time) * 24 * 60).to_i
   end
 end
 
 def display_search
-
+  puts "Hello Loco2 Peoples, here are your search results...."
+  puts ""
+  search = Search.new({file: 'search.xml'})
+  search.routes.each do |route|
+    puts "Route ID: #{route.id}"
+    puts "Number of connections: #{route.num_connections}"
+    puts "Total Trip Duration: #{route.total_travel_time} minutes"
+    puts "Connections:"
+    route.connections.each do |connection|
+      puts "  Waiting Time: #{connection.layover_wait} minutes" unless connection.layover_wait.nil?
+      puts "  Train Name: #{connection.train_name}"
+      puts "  Start Station: #{connection.start_station}"
+      puts "  Arrival Station: #{connection.finish_station}"
+      puts "  Departure Time: #{connection.departure_time}"
+      puts "  Arrival Time: #{connection.arrival_time}"
+      puts "  Duration: #{connection.duration} minutes"
+      puts "  Fares:"
+      connection.fares.each do |klass, fare|
+        puts "    Class: #{klass}, Price: #{fare[:value]} #{fare[:currency]}"
+      end
+      puts ""
+    end
+  end
+  puts "Cheapest Route: #{search.cheapest_route.id}"
+  puts "Quickest Route: #{search.quickest_route.id}"
 end
 
-search = Search.new({file: 'search.xml'})
-puts search.to_yaml
+display_search
