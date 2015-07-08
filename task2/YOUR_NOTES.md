@@ -8,11 +8,17 @@ Broke out the massive methods into more reasonable SRPish style methods
 
 
 Todos:
+
 Break out the html bit into something that builds the html, then outputs it.
+
 Allow it to take parameters from the command line, no hardcoded paths.
+
 A few of the methods aren't exactly SRP and could use more refactoring
+
 Create some kind of display class to manage all the output
+
 Alot of the calcs are ugly and could use a little cleanup
+
 0 error handling as it currently stands, could use some work
 
 
