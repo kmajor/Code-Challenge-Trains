@@ -1,5 +1,4 @@
 require "csv"
-require "pry"
 
 class Search
   attr_accessor :origin, :destination, :duration, :count, :sum, :min, :max
