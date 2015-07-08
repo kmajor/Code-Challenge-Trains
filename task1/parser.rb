@@ -1,7 +1,5 @@
 require 'nokogiri'
-require 'pry'
 require 'date'
-require 'yaml'
 
 class Search
   attr_accessor :routes, :doc
