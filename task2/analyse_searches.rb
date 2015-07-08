@@ -1,32 +1,69 @@
 require "csv"
+require "pry"
 
-searches = {}
+class Search
+  attr_accessor :origin, :destination, :duration, :count, :sum, :min, :max
+  def initialize(args)
+    @origin = args[:origin]
+    @destination = args[:destination]
+    @count = args[:count]
+    duration = duration_in_seconds(args[:duration])
+    @sum = @min = @max = duration
+  end
 
-CSV.foreach("searches.csv") do |row|
-  name = "#{row[0]} to #{row[1]}"
-  hours, minutes, seconds = row[2].split(":")
-  duration_in_seconds = hours.to_i * 60*60 + minutes.to_i * 60 + seconds.to_f
+  def mean
+    @sum / @count
+  end
 
-  if existing = searches[name]
-    existing[:sum] += duration_in_seconds
-    existing[:count] += 1
+  def name
+    @origin + " to " + @destination
+  end
 
-    if existing[:min] > duration_in_seconds
-      existing[:min] = duration_in_seconds
+  def aggregate_result(search_duration)
+    duration = duration_in_seconds(search_duration)
+    @sum += duration
+    @count += 1
+    if @min > duration
+      @min = duration
     end
 
-    if existing[:max] < duration_in_seconds
-      existing[:max] = duration_in_seconds
+    if @max < duration
+      @max = duration
     end
-  else
-    searches[name] = {
-      sum: duration_in_seconds,
-      count: 1,
-      min: duration_in_seconds,
-      max: duration_in_seconds
-    }
+  end
+
+  def duration_in_seconds(search_duration)
+    hours, minutes, seconds = search_duration.split(":")
+    hours.to_i * 60*60 + minutes.to_i * 60 + seconds.to_f
   end
 end
+
+
+class Parser
+  def self.parse_csv(file)
+    searches = Array.new
+    CSV.foreach(file) do |row|
+      origin = row[0]
+      destination = row[1]
+      duration = row[2]
+      search_args={
+        origin: origin,
+        destination: destination,
+        duration: duration,
+        count: 1,
+      }
+
+      if existing = searches.find_index {|search| search.origin == origin && search.destination == destination}
+        searches[existing].aggregate_result(duration)
+      else
+        searches << Search.new(search_args)
+      end
+    end
+  searches
+  end
+end
+
+searches = Parser.parse_csv("searches.csv")
 
 puts <<-HTML
 <html>
@@ -43,14 +80,13 @@ puts <<-HTML
         <th>Max duration</th>
       </tr>
 HTML
-
-searches.sort_by { |name, data| data[:count] }.reverse.each do |name, data|
+searches.sort_by { |search| search.count }.reverse.each do |search|
   puts "<tr>"
-  puts "<td>#{name}</td>"
-  puts "<td>#{data[:count]}</td>"
-  puts "<td>#{(data[:sum] / data[:count]).round(1)}s</td>"
-  puts "<td>#{data[:min].round(1)}s</td>"
-  puts "<td>#{data[:max].round(1)}s</td>"
+  puts "<td>#{search.name}</td>"
+  puts "<td>#{search.count}</td>"
+  puts "<td>#{search.mean.round(1)}s</td>"
+  puts "<td>#{search.min.round(1)}s</td>"
+  puts "<td>#{search.max.round(1)}s</td>"
   puts "</tr>"
 end
 
