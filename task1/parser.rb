@@ -128,22 +128,23 @@ def display_search
   puts "Hello Loco2 Peoples, here are your search results...."
   puts ""
   search = Search.new({file: 'search.xml'})
+  puts "Total # of routes: #{search.routes.count}"
   search.routes.each do |route|
-    puts "Route ID: #{route.id}"
-    puts "Number of connections: #{route.num_connections}"
-    puts "Total Trip Duration: #{route.total_travel_time} minutes"
-    puts "Connections:"
+    puts "  Route ID: #{route.id}"
+    puts "  Number of connections: #{(route.num_connections-1)}"
+    puts "  Total Trip Duration: #{route.total_travel_time} minutes"
+    puts "  Connections:"
     route.connections.each do |connection|
-      puts "  Waiting Time: #{connection.layover_wait} minutes" unless connection.layover_wait.nil?
-      puts "  Train Name: #{connection.train_name}"
-      puts "  Start Station: #{connection.start_station}"
-      puts "  Arrival Station: #{connection.finish_station}"
-      puts "  Departure Time: #{connection.departure_time}"
-      puts "  Arrival Time: #{connection.arrival_time}"
-      puts "  Duration: #{connection.duration} minutes"
-      puts "  Fares:"
+      puts "    Waiting Time: #{connection.layover_wait} minutes" unless connection.layover_wait.nil?
+      puts "    Train Name: #{connection.train_name}"
+      puts "    Start Station: #{connection.start_station}"
+      puts "    Arrival Station: #{connection.finish_station}"
+      puts "    Departure Time: #{connection.departure_time}"
+      puts "    Arrival Time: #{connection.arrival_time}"
+      puts "    Duration: #{connection.duration} minutes"
+      puts "    Fares:"
       connection.fares.each do |klass, fare|
-        puts "    Class: #{klass}, Price: #{fare[:value]} #{fare[:currency]}"
+        puts "      Class: #{klass}, Price: #{fare[:value]} #{fare[:currency]}"
       end
       puts ""
     end
